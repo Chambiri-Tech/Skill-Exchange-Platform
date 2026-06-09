@@ -174,6 +174,8 @@ MyProject/
  Author
 
 **Werema Paschal Chambiri**
+14320005/T.24 
+BSC.ICTM (BACHELOR OF SCIENCE IN INFORMATION COMMUNICATION INFORMATION TECHNOLOGY WITH MANAGEMENT)
 
 Bachelor Degree Student at Mzumbe University
 
