@@ -80,7 +80,7 @@ The platform is designed to create a collaborative environment where users can t
 
  Step 1: Clone the Repository
 
-  git clone https://github.com/YOUR_USERNAME/MyProject.git
+  git clone https://github.com/Chambiri-Tech/MyProject.git
 
 
  Step 2: Move to Project Directory
