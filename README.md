@@ -119,7 +119,7 @@ Import the SQL file provided in the project.
 
  Step 7: Run the Application
 
-Open your browser and visit:
+Open the browser and visit:
 
 http://localhost/MyProject
 
@@ -156,11 +156,11 @@ MyProject/
 ├── register.php
 ├── dashboard.php
 └── README.md
-```
+
 
 ---
 
-## Future Improvements
+ Future Improvements
 
 - Real-time chat system
 - Skill ratings and reviews
@@ -171,7 +171,7 @@ MyProject/
 
 ---
 
-## Author
+ Author
 
 **Werema Paschal Chambiri**
 
