@@ -9,32 +9,37 @@ if (isset($_POST['login'])) {
     $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $query = mysqli_query(
-        $conn,
-        "SELECT * FROM users WHERE email='$email'"
-    );
+    // ✅ FIX: use prepared statement
+    $stmt = $conn->prepare("SELECT * FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
 
-    if (mysqli_num_rows($query) > 0) {
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
 
-        $user = mysqli_fetch_assoc($query);
+    if ($user) {
 
         if (password_verify($password, $user['password'])) {
 
+            // SESSION
             $_SESSION['user_id'] = $user['id'];
+            $_SESSION['role'] = $user['role'];
 
-            header("Location: dashboard.php");
-            exit();
+            // ROLE REDIRECTION 
+            if ($user['role'] === 'admin') {
+                header("Location: admin/dashboard.php");
+                exit();
+            } else {
+                header("Location: skills.php");
+                exit();
+            }
 
         } else {
-
             $error = "Invalid password!";
-
         }
 
     } else {
-
         $error = "Email not found!";
-
     }
 }
 ?>
