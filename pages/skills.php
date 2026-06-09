@@ -1,125 +1,133 @@
 <?php
+/** @var mysqli $conn */
 session_start();
 
 require_once "../include/config.php";
 require_once "../include/header.php";
 
-/* DELETE */
-if(isset($_GET['delete']))
-{
-    $id = (int)$_GET['delete'];
+/* CHECK LOGIN */
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
-    mysqli_query(
-        $conn,
-        "DELETE FROM skills WHERE id='$id'"
-    );
+$user_id = $_SESSION['user_id'];
+
+/* DELETE SKILL */
+if (isset($_GET['delete'])) {
+
+    $id = (int) $_GET['delete'];
+
+    $stmt = $conn->prepare("DELETE FROM skills WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("ii", $id, $user_id);
+    $stmt->execute();
 
     header("Location: skills.php");
     exit();
 }
 
-/* ADD */
-if(isset($_POST['add_skill']))
-{
-    $skill_name = $_POST['skill_name'];
-    $skill_description = $_POST['skill_description'];
-    $user_id = $_SESSION['user_id'];
+/* ADD SKILL */
+if (isset($_POST['add_skill'])) {
 
-    mysqli_query(
-        $conn,
-        "INSERT INTO skills (skill_name, skill_description, user_id) VALUES ('$skill_name','$skill_description','$user_id')"
+    $skill_name = trim($_POST['skill_name']);
+    $skill_description = trim($_POST['skill_description']);
+
+    $stmt = $conn->prepare(
+        "INSERT INTO skills (skill_name, skill_description, user_id) VALUES (?, ?, ?)"
     );
+
+    $stmt->bind_param("ssi", $skill_name, $skill_description, $user_id);
+    $stmt->execute();
 
     header("Location: skills.php");
     exit();
 }
 
-/* LOAD EDIT */
+/* LOAD EDIT DATA  */
 $editSkill = null;
 
-if(isset($_GET['edit']))
-{
-    $id = (int)$_GET['edit'];
+if (isset($_GET['edit'])) {
 
-    $result = mysqli_query(
-        $conn,
-        "SELECT * FROM skills WHERE id='$id'"
+    $id = (int) $_GET['edit'];
+
+    $stmt = $conn->prepare(
+        "SELECT * FROM skills WHERE id = ? AND user_id = ?"
     );
 
-    $editSkill = mysqli_fetch_assoc($result);
+    $stmt->bind_param("ii", $id, $user_id);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $editSkill = $result->fetch_assoc();
 }
 
-/* UPDATE */
-if(isset($_POST['update_skill']))
-{
-    $id = (int)$_POST['id'];
+/* UPDATE SKILL  */
+if (isset($_POST['update_skill'])) {
 
-    $skill_name = $_POST['skill_name'];
-    $skill_description = $_POST['skill_description'];
+    $id = (int) $_POST['id'];
+    $skill_name = trim($_POST['skill_name']);
+    $skill_description = trim($_POST['skill_description']);
 
-    mysqli_query(
-        $conn,
-        "UPDATE skills SET skill_name='$skill_name', skill_description='$skill_description' WHERE id='$id'"
+    $stmt = $conn->prepare(
+        "UPDATE skills 
+         SET skill_name = ?, skill_description = ? 
+         WHERE id = ? AND user_id = ?"
     );
+
+    $stmt->bind_param("ssii", $skill_name, $skill_description, $id, $user_id);
+    $stmt->execute();
 
     header("Location: skills.php");
     exit();
 }
+
+/* FETCH SKILLS  */
+$stmt = $conn->prepare("
+    SELECT skills.*, users.fullname
+    FROM skills
+    JOIN users ON skills.user_id = users.id
+    WHERE skills.user_id = ?
+    ORDER BY skills.id DESC
+");
+
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+
+$skills = $stmt->get_result();
 ?>
 
 <div class="main">
 
     <h2>Manage Skills</h2>
 
+    <!-- ================= FORM ================= -->
     <form method="POST">
 
-        <input
-            type="hidden"
-            name="id"
+        <input type="hidden" name="id"
             value="<?php echo $editSkill['id'] ?? ''; ?>">
 
-        <input
-            type="text"
-            name="skill_name"
+        <input type="text" name="skill_name"
             placeholder="Skill Name"
-            value="<?php echo $editSkill['skill_name'] ?? ''; ?>"
+            value="<?php echo htmlspecialchars($editSkill['skill_name'] ?? ''); ?>"
             required>
 
-        <textarea
-            name="skill_description"
+        <textarea name="skill_description"
             placeholder="Skill Description"
-            required><?php echo $editSkill['skill_description'] ?? ''; ?></textarea>
+            required><?php echo htmlspecialchars($editSkill['skill_description'] ?? ''); ?></textarea>
 
-        <?php if($editSkill){ ?>
-
-            <button name="update_skill">
-                Update Skill
-            </button>
-
-        <?php } else { ?>
-
-            <button name="add_skill">
-                Add Skill
-            </button>
-
-        <?php } ?>
+        <?php if ($editSkill): ?>
+            <button name="update_skill">Update Skill</button>
+        <?php else: ?>
+            <button name="add_skill">Add Skill</button>
+        <?php endif; ?>
 
     </form>
 
     <br>
 
-    <?php
-
-    $skills = mysqli_query(
-        $conn,
-        "SELECT skills.*, users.fullname FROM skills JOIN users ON skills.user_id = users.id ORDER BY skills.id DESC"
-    );
-
-    ?>
-
     <div class="card-grid">
 
-        <?php while($row = mysqli_fetch_assoc($skills)){ ?>
+        <?php while ($row = $skills->fetch_assoc()): ?>
 
             <div class="card">
 
@@ -132,8 +140,7 @@ if(isset($_POST['update_skill']))
                 </p>
 
                 <small>
-                    👤 Posted by:
-                    <?php echo htmlspecialchars($row['fullname']); ?>
+                    👤 Posted by: <?php echo htmlspecialchars($row['fullname']); ?>
                 </small>
 
                 <br><br>
@@ -151,7 +158,7 @@ if(isset($_POST['update_skill']))
 
             </div>
 
-        <?php } ?>
+        <?php endwhile; ?>
 
     </div>
 
